@@ -1,0 +1,11 @@
+.DS_Store
+
+# Compiled files
+*.tfstate
+*.tfstate.backup
+
+# work directory
+**/tmp
+.terraform
+# hisotry
+!**/tfstate.backup/*.tfstate
