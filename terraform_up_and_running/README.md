@@ -199,7 +199,92 @@ resource "aws_iam_user" "example" {
 }
 ```
 
-for_each expressions, to loop over resources and inline blocks within a resource
+Note that after you’ve used count on a resource, it becomes an array of resources rather than just one resource. Because `aws_iam_user.example` is now an array of IAM users, instead of using the standard syntax to read an attribute from that resource (`<PROVIDER>_<TYPE>.<NAME>.<ATTRIBUTE>`), you must specify which IAM user you’re interested in by specifying its index in the array using the same array lookup syntax: `<PROVIDER>_<TYPE>.<NAME>[INDEX].ATTRIBUTE`
+For example:
+
+```
+output "all_arns" {
+  value       = aws_iam_user.example[*].arn
+  description = "The ARNs for all users"
+}
+```
+
+#### Limitations
+
+- `count` is not supported in `inline block`
+- Deleting resource in array using `count`
+
+---
+
+### For each
+
+`for_each` expressions, to loop over resources and inline blocks within a resource
+
+```
+resource "<PROVIDER>_<TYPE>" "<NAME>" {
+  for_each = <COLLECTION>
+
+  [CONFIG ...]
+}
+```
+
+Example
+
+```
+resource "aws_iam_user" "example" {
+  for_each = toset(var.user_names)
+  name     = each.value
+}
+```
+
+`toset` is used to convert list into a set.
+`for_each` supports sets and maps only when used on a resource.
+Once you’ve used for_each on a resource, it becomes a map of resources, rather than just one resource (or an array of resources as with `count`)
+
+```
+output "all_users" {
+  value = aws_iam_user.example
+}
+
+$ terraform apply
+
+(...)
+
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+all_users = {
+  "morpheus" = {
+    "arn" = "arn:aws:iam::123456789012:user/morpheus"
+    "force_destroy" = false
+    "id" = "morpheus"
+    "name" = "morpheus"
+    "path" = "/"
+    "tags" = {}
+  }
+  "neo" = {
+    "arn" = "arn:aws:iam::123456789012:user/neo"
+    "force_destroy" = false
+    "id" = "neo"
+    "name" = "neo"
+    "path" = "/"
+    "tags" = {}
+  }
+  "trinity" = {
+    "arn" = "arn:aws:iam::123456789012:user/trinity"
+    "force_destroy" = false
+    "id" = "trinity"
+    "name" = "trinity"
+    "path" = "/"
+    "tags" = {}
+  }
+}
+```
+
+The fact that you now have a map of resources with `for_each` rather than an array of resources as with `count` is a big deal, because it allows you to remove items from the middle of a collection safely.
+
+---
 
 for expressions, to loop over lists and maps
 
